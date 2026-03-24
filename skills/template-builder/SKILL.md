@@ -40,19 +40,25 @@ If no template ID or `all` was provided, ask:
 
 **1. Check for Brand DNA**
 
-Look for `brand-dna.md` files inside subdirectories of `brands/` in the current working directory (pattern: `brands/*/brand-dna.md`).
+Search for brand DNA files in both supported formats — check these two patterns in order:
 
-- If none found:
+1. **Subdirectory format (new):** `brands/*/brand-dna.md` — e.g. `brands/hotto-mame/brand-dna.md`
+2. **Flat file format (legacy):** `brands/*.md` — e.g. `brands/hotto-mame.md` — any `.md` file directly inside `brands/`, excluding `assets.json`
+
+Collect all matches from both patterns into a single candidate list.
+
+- If no candidates found:
   > ⚠️ Brand DNA belum ada. Jalankan dulu:
   > `/ads-creative:brand-dna [url atau deskripsi brand]`
 
   Then STOP.
 
-- If multiple brand directories exist, ask the user which one to use.
+- If exactly one candidate found, use it automatically.
+- If multiple candidates found, ask the user which one to use.
 
 **2. Read Brand DNA**
 
-Read the chosen `brands/{brand-name}/brand-dna.md` file. Extract and internalize all sections:
+Read the chosen brand DNA file. Extract and internalize all sections:
 - Visual System (fonts, colors)
 - Photography Style
 - Product Photography Direction
@@ -60,9 +66,13 @@ Read the chosen `brands/{brand-name}/brand-dna.md` file. Extract and internalize
 - Ad Creative Style
 - **IMAGE PROMPT MODIFIER** paragraph — this is critical
 
+**Determine Brand Directory for images:**
+- If the file is `brands/{brand-name}/brand-dna.md` → Brand Directory is `brands/{brand-name}/`
+- If the file is `brands/{brand-name}.md` (flat) → Brand Directory is `brands/{brand-name}/` (derive the name from the filename, strip `.md`)
+
 **3. Read Reference Images**
 
-Scan `brands/{brand-name}/` for image files (`.jpg`, `.jpeg`, `.png`, case-insensitive). If found, **read every image file** so you have direct visual context of the actual product.
+Scan the Brand Directory for image files (`.jpg`, `.jpeg`, `.png`, case-insensitive). If found, **read every image file** so you have direct visual context of the actual product.
 
 Use what you see in the images to:
 - Identify exact product colors, packaging shape, label details, finish (matte/glossy), and texture
@@ -142,7 +152,7 @@ Always write the complete file from scratch (overwrite if exists).
 **Brand:** [brand name]
 **Product:** [product name from input]
 **Date:** [today's date]
-**Brand DNA:** brands/[brand-name]/brand-dna.md
+**Brand DNA:** [path to the brand DNA file that was read]
 **Brand Directory:** brands/[brand-name]/
 
 ---

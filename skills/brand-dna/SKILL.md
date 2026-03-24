@@ -52,7 +52,15 @@ Search for 2-3 direct competitors. Note their visual differentiation from the br
 
 ### PHASE 4 — Generate Brand DNA Document
 
-Compile all research into the following structure and save to `brands/{brand-name}/brand-dna.md` (brand name lowercase, hyphenated, e.g. `brands/meet-macros/brand-dna.md`). Create the directory if it doesn't exist.
+Compile all research into the following structure. Save as `brands/{brand-name}/brand-dna.md` (brand name lowercase, hyphenated, e.g. `brands/meet-macros/brand-dna.md`).
+
+**Before writing the file, run this command to create the directory:**
+
+```bash
+mkdir -p brands/{brand-name}
+```
+
+Then write the file to `brands/{brand-name}/brand-dna.md`. The file must be inside the subdirectory — not at `brands/{brand-name}.md`.
 
 ```markdown
 # BRAND DNA: [BRAND NAME]
