@@ -60,7 +60,23 @@ Read the chosen `brands/{brand-name}/brand-dna.md` file. Extract and internalize
 - Ad Creative Style
 - **IMAGE PROMPT MODIFIER** paragraph — this is critical
 
-**3. Read Templates**
+**3. Read Reference Images**
+
+Scan `brands/{brand-name}/` for image files (`.jpg`, `.jpeg`, `.png`, case-insensitive). If found, **read every image file** so you have direct visual context of the actual product.
+
+Use what you see in the images to:
+- Identify exact product colors, packaging shape, label details, finish (matte/glossy), and texture
+- Note any text, logo, or graphic elements visible on the product
+- Observe physical proportions and distinctive visual features of the packaging
+
+This eliminates hallucination — every prompt must describe what is **actually visible** in the photos, not assumed from text alone. The filled prompts must be specific enough that someone who has never seen the product could reconstruct it exactly from the prompt.
+
+If no images are found:
+> ⚠️ Tidak ada foto referensi di `brands/{brand-name}/`. Tambahkan foto produk sebelum mengisi template agar prompt tidak mengarang detail yang salah.
+
+Then STOP.
+
+**5. Read Templates**
 
 Read the templates file at:
 `${CLAUDE_PLUGIN_ROOT}/templates/image-templates.md`
@@ -75,25 +91,27 @@ For **each template to be filled** (either just the one requested, or all 40), f
 
 | Placeholder type | Source |
 |-----------------|--------|
-| Brand colors (primary, accent, etc.) | Brand DNA — Visual System |
+| Brand colors (primary, accent, etc.) | Reference images + Brand DNA — Visual System |
 | Font / typography references | Brand DNA — Visual System |
 | Photography style descriptors | Brand DNA — Photography Style |
 | Surface, background, props | Brand DNA — Product Photography Direction |
-| Packaging details (color, finish, shape) | Brand DNA — Packaging |
+| Packaging details (color, finish, shape) | Reference images (primary source) + Brand DNA — Packaging |
 | Product name | User's product name input |
-| Product description details | User's product name + infer reasonable details |
+| Product description details | Reference images (what is visually observable) |
 | Ad copy / headlines / hooks | Create on-brand copy using the 5 Brand Voice Adjectives |
 | Mood / atmosphere adjectives | Brand DNA — Photography Style mood keywords |
-| Post-it / sticky note colors | Match brand palette |
+| Post-it / sticky note colors | Match brand palette from reference images |
 | CTA / caption text | Match brand's CTA style and tone |
 
 ### Rules
 
-- **DO NOT translate** prompts to English — all prompts stay in Bahasa Indonesia
+- **HARD RULE — Language:** Every piece of copywriting (headlines, hooks, captions, CTA text, overlays) **must be in Bahasa Indonesia**. No exceptions. Append `Copywriting harus dengan bahasa indonesia.` at the end of every filled prompt.
+- **HARD RULE — Visual accuracy:** Every visual detail (packaging color, shape, label, finish, logo position) must be grounded in what is **actually visible in the reference images**. Do not invent or assume any detail not visible in the photos.
+- **DO NOT translate** the prompt structure to English — all prompts stay in Bahasa Indonesia
 - **DO NOT alter** the technical structure of each prompt (lighting setups, ratios, etc.)
 - **DO prepend** the IMAGE PROMPT MODIFIER paragraph to every prompt
 - **DO make** every prompt fully self-contained — no placeholders remaining
-- **DO write** ad copy (headlines, hooks, captions) that is creative, punchy, and on-brand
+- **DO write** ad copy that is creative, punchy, and on-brand
 - Keep copy short and natural — these are ad captions, not essays
 
 ---
