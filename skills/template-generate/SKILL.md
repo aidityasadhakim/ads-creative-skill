@@ -1,6 +1,6 @@
 ---
 name: template-generate
-description: Generate an image from a filled prompt template using viostudio.id API (nano-banana-2). Takes a template ID (1-40). Checks credits, submits generation, polls for completion, and saves the result log.
+description: Generate an image from a filled prompt template using viostudio.id API (nano-banana-2). Takes a template ID (1-40). Uploads brand reference images, submits generation, polls for completion, and saves the result log.
 argument-hint: [template_id 1-40]
 disable-model-invocation: true
 ---
@@ -50,25 +50,51 @@ If multiple files found, ask user which one to use.
 
 ### 3. Parse the Requested Template
 
-Read the prompts file and extract the section matching Template `$ARGUMENTS`.
-
-Look for the heading `## Template $ARGUMENTS` (or `## Template $ARGUMENTS —`).
-
-Extract:
-- **Full prompt text** — everything under `### Prompt` until the next `---`
+Read the prompts file and extract:
+- **Brand Directory** — from the header line `**Brand Directory:** brands/{brand-name}/`
+- **Full prompt text** — section matching `## Template $ARGUMENTS` (or `## Template $ARGUMENTS —`), everything under `### Prompt` until the next `---`
 - **Aspect ratio** — scan the prompt text for patterns like `Rasio aspek 4:5`, `rasio 4:5`, `aspect ratio 4:5`, or `4:5`. Default to `1:1` if none found.
 
-### 4. Check Credits
+### 4. Reference Images
+
+Scan the Brand Directory parsed above for image files with extensions: `.jpg`, `.jpeg`, `.png` (case-insensitive).
+
+If the Brand Directory is missing or no images are found:
+> ⚠️ Tidak ada foto referensi ditemukan di `brands/{brand-name}/`.
+>
+> Tambahkan foto produk, logo, atau packaging ke folder tersebut sebelum generate.
+> Format: JPEG atau PNG, maks. 20 MB per file.
+>
+> Contoh:
+> ```
+> brands/{brand-name}/
+> ├── brand-dna.md
+> ├── logo.png
+> ├── product-front.jpg
+> └── packaging.jpg
+> ```
+
+Then STOP.
+
+If images are found, list them for the user:
+> 📸 Ditemukan [N] foto referensi di `brands/{brand-name}/`:
+> - logo.png
+> - product-front.jpg
+> - packaging.jpg
+>
+> Foto-foto ini akan di-upload sebagai referensi ke viostudio.id.
+
+### 5. Check Credits
 
 ```bash
 curl -s -X GET "https://api.viostudio.id/v1/account/credits" \
   -H "Authorization: Bearer $VIOSTUDIO_API_KEY"
 ```
 
-- If the response indicates insufficient credits (balance < 3), warn:
+- If the response indicates insufficient credits (`total_credits` < 3):
   > ⚠️ Credits tidak cukup untuk generate (butuh minimal 3 credits untuk nano-banana-2).
-  > Sisa credits: [amount]
-  
+  > Sisa credits: [total_credits]
+
   Then STOP.
 
 - If credits are sufficient, continue.
@@ -77,7 +103,32 @@ curl -s -X GET "https://api.viostudio.id/v1/account/credits" \
 
 ## Generation Flow
 
-### Step 1 — Submit Generation
+### Step 1 — Upload Reference Images
+
+For each image file found in the Brand Directory, upload via multipart form:
+
+```bash
+curl -s -X POST "https://api.viostudio.id/v1/assets" \
+  -H "Authorization: Bearer $VIOSTUDIO_API_KEY" \
+  -F "file=@brands/{brand-name}/{filename}"
+```
+
+**Response** `201 Created`:
+```json
+{
+  "asset_id": 123,
+  "content_type": "image/jpeg",
+  "url": "https://s3.viostudio.id/assets/...",
+  "created_at": "..."
+}
+```
+
+- Collect all returned `asset_id` integers into an array (e.g. `[123, 124, 125]`)
+- If any upload fails (non-201 response), show the error and ask user whether to continue with the successfully uploaded images or STOP
+- After all uploads, confirm:
+  > ✅ [N] foto berhasil di-upload (asset IDs: 123, 124, 125)
+
+### Step 2 — Submit Generation
 
 ```bash
 curl -s -X POST "https://api.viostudio.id/v1/images/generate" \
@@ -86,17 +137,28 @@ curl -s -X POST "https://api.viostudio.id/v1/images/generate" \
   -d '{
     "model": "nano-banana-2",
     "prompt": "[FULL PROMPT TEXT]",
-    "aspect_ratio": "[ASPECT RATIO]"
+    "aspect_ratio": "[ASPECT RATIO]",
+    "reference_asset_ids": [123, 124, 125]
   }'
 ```
 
-Parse the response to get the generation ID (field may be `id`, `generation_id`, or similar).
+**Response** `202 Accepted`:
+```json
+{
+  "generation_ids": [1001],
+  "status": "queued",
+  "credits_charged": 3,
+  "estimated_seconds": 30
+}
+```
 
-If the response contains an error, display it and STOP.
+- Parse `generation_ids` (array) — use the first ID for polling
+- Store `credits_charged` from this response
+- If the response contains an error, display it and STOP
 
-### Step 2 — Poll for Completion
+### Step 3 — Poll for Completion
 
-Poll `GET /v1/generations/{generation_id}` with these intervals:
+Poll `GET /v1/generations/{generation_id}` using `generation_ids[0]`:
 
 | Phase | Interval | Max attempts |
 |-------|----------|-------------|
@@ -109,20 +171,31 @@ curl -s -X GET "https://api.viostudio.id/v1/generations/{generation_id}" \
   -H "Authorization: Bearer $VIOSTUDIO_API_KEY"
 ```
 
+**Response**:
+```json
+{
+  "id": 1001,
+  "status": "completed",
+  "asset_url": "https://s3.viostudio.id/generations/...",
+  "credits_charged": 3,
+  "error_message": null
+}
+```
+
 Update the user between phases:
 > ⏳ Status: [status] — [elapsed]s
 
 Possible statuses: `queued`, `processing`, `completed`, `failed`
 
-If status is `failed`, report the error and STOP.
+If status is `failed`, report `error_message` and STOP.
 
 If 10 minutes pass without completion, report a timeout and STOP.
 
-### Step 3 — Handle Completion
+### Step 4 — Handle Completion
 
-On `completed` response:
-1. Extract the image URL from the response (field may be `asset_url`, `output_url`, `url`, or similar — check all)
-2. Extract `credits_used` if present in the response
+On `completed`:
+1. Extract `asset_url` from the poll response
+2. Use `credits_charged` from the initial `202` response (Step 2)
 
 ---
 
@@ -137,9 +210,10 @@ Create directories if needed, then save to `output/generated/template-{id}-{time
 - **Model:** nano-banana-2
 - **Aspect Ratio:** {ratio}
 - **Status:** completed
-- **Credits Used:** {credits or "unknown"}
+- **Credits Used:** {credits_charged}
 - **Generated At:** {ISO timestamp}
-- **Image URL:** {url}
+- **Image URL:** {asset_url}
+- **Reference Images:** {comma-separated filenames} (asset IDs: {comma-separated IDs})
 
 ## Prompt Used
 
@@ -153,8 +227,9 @@ Create directories if needed, then save to `output/generated/template-{id}-{time
 ```
 ✅ Template {id} berhasil di-generate!
 
-🖼️  Image URL: {url}
-💳  Credits used: {credits}
+🖼️  Image URL: {asset_url}
+💳  Credits used: {credits_charged}
+📸  Reference images: {N} foto (asset IDs: {ids})
 📄  Log: output/generated/template-{id}-{timestamp}.md
 ```
 
@@ -165,10 +240,12 @@ Create directories if needed, then save to `output/generated/template-{id}-{time
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/v1/account/credits` | GET | Check remaining credits |
+| `/v1/assets` | POST | Upload reference image (multipart/form-data) |
 | `/v1/images/generate` | POST | Submit image generation |
 | `/v1/generations/{id}` | GET | Poll generation status |
-| `/v1/assets` | POST | Upload reference image (if needed) |
 
-**Auth header:** `Authorization: Bearer $VIOSTUDIO_API_KEY`  
-**Default model:** `nano-banana-2` — 3 credits/image  
+**Auth header:** `Authorization: Bearer $VIOSTUDIO_API_KEY`
+**Default model:** `nano-banana-2` — 3 credits/image
 **Base URL:** `https://api.viostudio.id/v1`
+**Max reference images:** 10 (nano-banana-2)
+**Supported upload formats:** JPEG, PNG (max 20 MB each)

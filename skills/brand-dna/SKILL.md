@@ -1,6 +1,6 @@
 ---
 name: brand-dna
-description: Research a brand and create a comprehensive Brand DNA document. Use when given a brand URL or description to analyze brand identity, visual system, photography style, packaging, and ad creative style. Saves output to brands/{brand-name}.md in the current project.
+description: Research a brand and create a comprehensive Brand DNA document. Use when given a brand URL or description to analyze brand identity, visual system, photography style, packaging, and ad creative style. Saves output to brands/{brand-name}/brand-dna.md and prompts user to add reference images before generation.
 argument-hint: [url or brand description]
 disable-model-invocation: true
 ---
@@ -52,7 +52,7 @@ Search for 2-3 direct competitors. Note their visual differentiation from the br
 
 ### PHASE 4 — Generate Brand DNA Document
 
-Compile all research into the following structure and save to `brands/{brand-name}.md` (brand name lowercase, hyphenated, e.g. `brands/meet-macros.md`):
+Compile all research into the following structure and save to `brands/{brand-name}/brand-dna.md` (brand name lowercase, hyphenated, e.g. `brands/meet-macros/brand-dna.md`). Create the directory if it doesn't exist.
 
 ```markdown
 # BRAND DNA: [BRAND NAME]
@@ -125,6 +125,44 @@ Compile all research into the following structure and save to `brands/{brand-nam
 ## Post-Output
 
 After saving the file:
-1. Confirm: `✅ Brand DNA saved to brands/{brand-name}.md`
+
+1. Confirm: `✅ Brand DNA saved to brands/{brand-name}/brand-dna.md`
 2. Show a quick summary: name, tagline, 5 voice adjectives, primary color
-3. Tell user: `Sekarang jalankan /ads-creative:template-builder [nama produk] untuk mengisi 40 template prompt.`
+3. Tell the user the following — exactly in this order:
+
+---
+
+**Langkah selanjutnya sebelum generate:**
+
+**1. Tambahkan foto referensi produk**
+
+Letakkan foto-foto produk, logo, atau packaging ke dalam folder:
+```
+brands/{brand-name}/
+```
+Format yang didukung: **JPEG, PNG** (maks. 20 MB per file, maks. 10 file)
+
+Foto ini **wajib ada** sebelum generate gambar. Contoh isi folder:
+```
+brands/{brand-name}/
+├── brand-dna.md       ← sudah dibuat
+├── logo.png
+├── product-front.jpg
+└── packaging.jpg
+```
+
+**2. Set API key viostudio.id**
+
+```bash
+export VIOSTUDIO_API_KEY=vio_sk_xxxxx
+```
+
+Tambahkan ke `.bashrc` / `.zshrc` agar tidak perlu diset ulang setiap sesi.
+
+**3. Isi template prompt**
+
+```
+/ads-creative:template-builder [nama produk]
+```
+
+---

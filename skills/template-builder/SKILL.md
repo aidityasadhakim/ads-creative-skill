@@ -23,19 +23,19 @@ If `$ARGUMENTS` is empty, ask the user:
 
 **1. Check for Brand DNA**
 
-Look for `.md` files in the `brands/` directory of the current working directory.
+Look for `brand-dna.md` files inside subdirectories of `brands/` in the current working directory (pattern: `brands/*/brand-dna.md`).
 
-- If `brands/` is empty or doesn't exist:
+- If none found:
   > ⚠️ Brand DNA belum ada. Jalankan dulu:
   > `/ads-creative:brand-dna [url atau deskripsi brand]`
   
   Then STOP.
 
-- If multiple brand files exist, ask the user which one to use.
+- If multiple brand directories exist, ask the user which one to use.
 
 **2. Read Brand DNA**
 
-Read the chosen `brands/{brand-name}.md` file. Extract and internalize all sections:
+Read the chosen `brands/{brand-name}/brand-dna.md` file. Extract and internalize all sections:
 - Visual System (fonts, colors)
 - Photography Style
 - Product Photography Direction  
@@ -91,7 +91,8 @@ Save to `output/{brand-name}-{product-slug}-prompts.md` in the current working d
 **Brand:** [brand name]
 **Product:** [product name from $ARGUMENTS]
 **Date:** [today's date]
-**Brand DNA:** brands/[filename].md
+**Brand DNA:** brands/[brand-name]/brand-dna.md
+**Brand Directory:** brands/[brand-name]/
 
 ---
 
