@@ -105,7 +105,7 @@ For **each template to be filled** (either just the one requested, or all 40), f
 
 ### Rules
 
-- **HARD RULE — Language:** Every piece of copywriting (headlines, hooks, captions, CTA text, overlays) **must be in Bahasa Indonesia**. No exceptions. Append `Copywriting harus dengan bahasa indonesia.` at the end of every filled prompt.
+- **HARD RULE — Language:** Every piece of copywriting (headlines, hooks, captions, CTA text, overlays) **must be in Bahasa Indonesia**. No exceptions. The literal string `Copywriting harus dengan bahasa indonesia.` is hard-injected at the end of every prompt in the output file — see Output Format below.
 - **HARD RULE — Visual accuracy:** Every visual detail (packaging color, shape, label, finish, logo position) must be grounded in what is **actually visible in the reference images**. Do not invent or assume any detail not visible in the photos.
 - **DO NOT translate** the prompt structure to English — all prompts stay in Bahasa Indonesia
 - **DO NOT alter** the technical structure of each prompt (lighting setups, ratios, etc.)
@@ -154,7 +154,7 @@ Always write the complete file from scratch (overwrite if exists).
 
 ### Prompt
 
-[Complete filled prompt, ready to send to image model]
+[Complete filled prompt, ready to send to image model] Copywriting harus dengan bahasa indonesia.
 
 ---
 
@@ -162,6 +162,8 @@ Always write the complete file from scratch (overwrite if exists).
 
 ...
 ```
+
+> **CRITICAL:** The literal text `Copywriting harus dengan bahasa indonesia.` must be appended — as-is, verbatim — at the end of every single prompt block when writing to the file. This is a hard injection into the output, not a guideline. Do not paraphrase, translate, or omit it.
 
 ---
 

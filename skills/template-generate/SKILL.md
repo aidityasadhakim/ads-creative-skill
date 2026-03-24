@@ -57,6 +57,23 @@ Read the prompts file and extract:
 
 ### 4. Reference Images
 
+**UGC templates — skip reference images entirely:**
+
+The following templates are UGC/native style where the product is not shown and reference images cause a "Gambar referensi tidak valid" rejection from the model. For these templates, skip all image upload and asset steps and go directly to Step 2 (Submit Generation) with no `reference_asset_ids`:
+
+| Template | Name |
+|----------|------|
+| 8 | Before & After UGC |
+| 20 | Advertorial / Editorial Content Card |
+| 29 | UGC + Viral Post Overlay |
+| 32 | UGC Story Callout |
+| 36 | Whiteboard Before/After |
+| 39 | Curiosity Gap / Scroll-Stopper |
+
+For all other templates, proceed with the reference image flow below.
+
+---
+
 Scan the Brand Directory parsed above for image files with extensions: `.jpg`, `.jpeg`, `.png` (case-insensitive). Exclude `assets.json` and `brand-dna.md` from the scan.
 
 If the Brand Directory is missing or no images are found:
@@ -271,6 +288,26 @@ Create directories if needed, then save to `output/generated/template-{id}-{time
 📸  Reference images: {N} foto (asset IDs: {ids})
 📄  Log: output/generated/template-{id}-{timestamp}.md
 ```
+
+---
+
+## Known Failure Patterns
+
+These are confirmed causes of generation rejection by nano-banana-2. If a generation fails, check the prompt against this list before retrying.
+
+| Pattern | Why it fails | Fix |
+|---------|-------------|-----|
+| Mentioning real platform brands (Twitter, X, Reddit, Facebook, Instagram, TikTok) | Trademark filter | Use generic terms: "platform media sosial", "forum online", "postingan komunitas" |
+| Fake social media UI specifics (username @handle, upvote counts, retweet numbers, timestamps like "2j") | Detected as fake screenshot generation | Use generic UI shapes: "kotak putih bersudut membulat", "nama pengguna anonim", "stempel waktu" |
+| Reference image sent with UGC/selfie-style prompt | Reference image (product photo) conflicts with selfie/UGC style prompt | Skip `reference_asset_ids` for UGC templates (see list above) |
+| Mentioning real publication brands (Daily Mail, Vogue, TODAY) in editorial templates | Trademark filter | Use generic: "publikasi media terkemuka", "majalah gaya hidup ternama" |
+
+### Retry without reference images
+
+If a non-UGC template fails with an error that suggests image conflict or content rejection, automatically retry once without `reference_asset_ids` and notify the user:
+> ⚠️ Generate gagal dengan referensi gambar. Mencoba ulang tanpa referensi...
+
+If the retry succeeds, note it in the result log: `**Reference Images:** none (retry without references)`.
 
 ---
 
