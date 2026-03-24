@@ -57,7 +57,7 @@ Read the prompts file and extract:
 
 ### 4. Reference Images
 
-Scan the Brand Directory parsed above for image files with extensions: `.jpg`, `.jpeg`, `.png` (case-insensitive).
+Scan the Brand Directory parsed above for image files with extensions: `.jpg`, `.jpeg`, `.png` (case-insensitive). Exclude `assets.json` and `brand-dna.md` from the scan.
 
 If the Brand Directory is missing or no images are found:
 > ⚠️ Tidak ada foto referensi ditemukan di `brands/{brand-name}/`.
@@ -76,13 +76,41 @@ If the Brand Directory is missing or no images are found:
 
 Then STOP.
 
-If images are found, list them for the user:
-> 📸 Ditemukan [N] foto referensi di `brands/{brand-name}/`:
-> - logo.png
-> - product-front.jpg
-> - packaging.jpg
->
-> Foto-foto ini akan di-upload sebagai referensi ke viostudio.id.
+**Asset cache check:**
+
+Check if `brands/{brand-name}/assets.json` exists and read it if so. The file has this structure:
+
+```json
+{
+  "uploaded_at": "2026-03-24T15:00:00Z",
+  "assets": [
+    {"filename": "logo.png", "asset_id": 123, "url": "https://s3.viostudio.id/..."},
+    {"filename": "product-front.jpg", "asset_id": 124, "url": "https://s3.viostudio.id/..."}
+  ]
+}
+```
+
+Apply the following logic:
+
+1. **Cache is stale (older than 25 days):** Ignore the cache entirely — re-upload all images. The viostudio.id API expires assets after 30 days; the 25-day threshold gives a 5-day safety buffer.
+
+2. **Cache exists and is fresh:**
+   - Build a map of `filename → asset_id` from the cache
+   - For each image file found in the Brand Directory:
+     - If filename exists in the cache → use the cached `asset_id`, skip upload
+     - If filename is **not** in the cache (new file added) → upload it, collect the new `asset_id`
+   - Ignore cache entries whose filename no longer exists in the directory (file was deleted)
+   - If any new files were uploaded, update `assets.json` with the new entries (keep existing ones, append new ones, update `uploaded_at` to now)
+
+3. **Cache does not exist:** Upload all images, create `assets.json`.
+
+**To force a full re-upload** (e.g. user replaced a file with the same name), the user can delete `assets.json` and re-run.
+
+After resolving asset IDs, report to user:
+> 📸 [N] foto referensi siap (X dari cache, Y di-upload baru):
+> - logo.png → asset ID 123 (cached)
+> - product-front.jpg → asset ID 124 (cached)
+> - new-photo.jpg → asset ID 125 (uploaded)
 
 ### 5. Check Credits
 
@@ -103,9 +131,11 @@ curl -s -X GET "https://api.viostudio.id/v1/account/credits" \
 
 ## Generation Flow
 
-### Step 1 — Upload Reference Images
+### Step 1 — Upload New Reference Images
 
-For each image file found in the Brand Directory, upload via multipart form:
+Only upload image files that were **not** resolved from the cache in Pre-check 4. Skip this step entirely if all images were served from cache.
+
+For each image that needs uploading:
 
 ```bash
 curl -s -X POST "https://api.viostudio.id/v1/assets" \
@@ -123,10 +153,9 @@ curl -s -X POST "https://api.viostudio.id/v1/assets" \
 }
 ```
 
-- Collect all returned `asset_id` integers into an array (e.g. `[123, 124, 125]`)
-- If any upload fails (non-201 response), show the error and ask user whether to continue with the successfully uploaded images or STOP
-- After all uploads, confirm:
-  > ✅ [N] foto berhasil di-upload (asset IDs: 123, 124, 125)
+- Collect the new `asset_id` values and merge with cached IDs into a single array
+- If any upload fails (non-201 response), show the error and ask the user whether to continue with successfully resolved images or STOP
+- After uploads, write/update `brands/{brand-name}/assets.json` with all current entries and set `uploaded_at` to the current ISO timestamp
 
 ### Step 2 — Submit Generation
 
