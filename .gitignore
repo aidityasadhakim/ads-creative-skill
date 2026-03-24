@@ -1,0 +1,30 @@
+# Runtime output directories (created in user's working dir at runtime, not part of plugin)
+brands/
+output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment/secrets
+.env
+.env.*
+*.env
+
+# Node (in case tooling is added)
+node_modules/
+npm-debug.log*
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+*.temp
