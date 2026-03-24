@@ -3,9 +3,9 @@
   "description": "Automated ads creative generation — research brand DNA, fill 40 prompt templates, and generate images via viostudio.id API (nano-banana-2)",
   "version": "1.0.0",
   "author": {
-    "name": "aidityas"
+    "name": "aidityasadhakim"
   },
-  "repository": "https://github.com/aidityas/ads-creative-skill",
+  "repository": "https://github.com/aidityasadhakim/ads-creative-skill",
   "license": "MIT",
   "keywords": ["ads", "creative", "image-generation", "viostudio", "marketing", "brand", "nano-banana"]
 }

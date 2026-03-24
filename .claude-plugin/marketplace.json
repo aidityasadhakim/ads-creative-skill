@@ -1,7 +1,7 @@
 {
   "name": "ads-creative",
   "owner": {
-    "name": "aidityas"
+    "name": "aidityasadhakim"
   },
   "metadata": {
     "description": "Automated ads creative generation — research brand DNA, fill 40 prompt templates, and generate images via viostudio.id API"
@@ -13,10 +13,10 @@
       "description": "Research brand DNA, fill 40 prompt templates, and generate images via viostudio.id (nano-banana-2)",
       "version": "1.0.0",
       "author": {
-        "name": "aidityas"
+        "name": "aidityasadhakim"
       },
-      "homepage": "https://github.com/aidityas/ads-creative-skill",
-      "repository": "https://github.com/aidityas/ads-creative-skill",
+      "homepage": "https://github.com/aidityasadhakim/ads-creative-skill",
+      "repository": "https://github.com/aidityasadhakim/ads-creative-skill",
       "license": "MIT",
       "keywords": ["ads", "creative", "image-generation", "viostudio", "marketing", "brand"]
     }
