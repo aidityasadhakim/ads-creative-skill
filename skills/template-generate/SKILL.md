@@ -225,6 +225,14 @@ If 10 minutes pass without completion, report a timeout and STOP.
 On `completed`:
 1. Extract `asset_url` from the poll response
 2. Use `credits_charged` from the initial `202` response (Step 2)
+3. Determine the file extension from the `asset_url` (e.g. `.jpg`, `.png`). Default to `.jpg` if unclear.
+4. Download the image to `output/generated/template-{id}-{timestamp}{ext}`:
+
+```bash
+curl -s -L "{asset_url}" -o "output/generated/template-{id}-{timestamp}{ext}"
+```
+
+If the download fails (non-zero exit or empty file), warn the user but do not STOP — the image is still accessible via the URL.
 
 ---
 
@@ -242,6 +250,7 @@ Create directories if needed, then save to `output/generated/template-{id}-{time
 - **Credits Used:** {credits_charged}
 - **Generated At:** {ISO timestamp}
 - **Image URL:** {asset_url}
+- **Local File:** output/generated/template-{id}-{timestamp}{ext}
 - **Reference Images:** {comma-separated filenames} (asset IDs: {comma-separated IDs})
 
 ## Prompt Used
@@ -257,6 +266,7 @@ Create directories if needed, then save to `output/generated/template-{id}-{time
 ✅ Template {id} berhasil di-generate!
 
 🖼️  Image URL: {asset_url}
+💾  Saved to: output/generated/template-{id}-{timestamp}{ext}
 💳  Credits used: {credits_charged}
 📸  Reference images: {N} foto (asset IDs: {ids})
 📄  Log: output/generated/template-{id}-{timestamp}.md
